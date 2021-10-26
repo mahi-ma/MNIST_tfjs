@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tfjs</title>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+    <style>
+      #btn{
+        margin: 0px 40px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Choose digits image to get predictions</h2>
+    <img
+      style="height: 28px; width: 28px; visibility: hidden;"
+      src=""
+      id="threeImg"
+    />
+    <canvas
+      id="myCanvas"
+      width="400"
+      height="400"
+      style="border: 1px solid #000000;"
+    >
+    Your browser doesn't include support for the canvas element.
+    </canvas>
+    <br>
+    <input id="fileupload" style="margin: 20px 40px;" type="file" onchange="fileChange()" accept="image/png, image/jpeg" />
+    <br>
+    <input id="btn" type="button" onclick="handlePredict()" value="Predict" />
+    <input type="text" id="predInput" />
+    <script>
+      var model;
+      (async function () {
+        model = await tf.loadLayersModel(
+          "https://raw.githubusercontent.com/mahi-ma/tfjs-mnist-workshop/master/model/model.json"
+        );
+        console.log("model loaded");
+      })();
+
+      var c = document.getElementById("myCanvas");
+      var ctx = c.getContext("2d");
+      var img = document.getElementById("threeImg");
+      img.onload = function(){
+        ctx.drawImage(img,100,100,200,200);
+      }
+      img.src="./three.png";
+      var inputEle = document.getElementById("predInput");
+      async function handlePredict() {
+        const imageToPredict = tf.browser.fromPixels(img).mean(2).toFloat().reshape([1,784]).div(255.0);
+        imageToPredict.data().then(res=>console.log("image array = ",res));
+        console.log(imageToPredict.shape, 'image shape');
+        const pred = await model.predict(imageToPredict).data();
+        console.log(pred);
+        tf.argMax(pred,axis=0).data().then((res)=> inputEle.value = res[0]);
+      }
+
+      function fileChange(e){
+        var myFileList = document.getElementById("fileupload");
+        img.onload = function() {
+            ctx.drawImage(img,100,100,200,200);
+        }
+        img.src = URL.createObjectURL(myFileList.files[0]);
+      }
+    </script>
+  </body>
+</html>
